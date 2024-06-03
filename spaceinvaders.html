@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Invaders</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas {
+            border: 2px solid white;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const playerWidth = 50;
+        const playerHeight = 10;
+        const playerSpeed = 5;
+        const bulletRadius = 5;
+        const bulletSpeed = 5;
+        const enemyRowCount = 5;
+        const enemyColumnCount = 10;
+        const enemyWidth = 30;
+        const enemyHeight = 20;
+        const enemyPadding = 10;
+        const enemyOffsetTop = 30;
+        const enemyOffsetLeft = 30;
+
+        let playerX = (canvas.width - playerWidth) / 2;
+        let bulletY = canvas.height;
+        let bulletFired = false;
+        let bulletX = playerX + playerWidth / 2;
+        let enemies = [];
+
+        for (let c = 0; c < enemyColumnCount; c++) {
+            enemies[c] = [];
+            for (let r = 0; r < enemyRowCount; r++) {
+                enemies[c][r] = { x: 0, y: 0, status: 1 };
+            }
+        }
+
+        function drawPlayer() {
+            ctx.beginPath();
+            ctx.rect(playerX, canvas.height - playerHeight, playerWidth, playerHeight);
+            ctx.fillStyle = "white";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawEnemies() {
+            for (let c = 0; c < enemyColumnCount; c++) {
+                for (let r = 0; r < enemyRowCount; r++) {
+                    if (enemies[c][r].status === 1) {
+                        let enemyX = c * (enemyWidth + enemyPadding) + enemyOffsetLeft;
+                        let enemyY = r * (enemyHeight + enemyPadding) + enemyOffsetTop;
+                        enemies[c][r].x = enemyX;
+                        enemies[c][r].y = enemyY;
+                        ctx.beginPath();
+                        ctx.rect(enemyX, enemyY, enemyWidth, enemyHeight);
+                        ctx.fillStyle = "red";
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                }
+            }
+        }
+
+        function drawBullet() {
+            if (bulletFired) {
+                ctx.beginPath();
+                ctx.arc(bulletX, bulletY, bulletRadius, 0, Math.PI * 2);
+                ctx.fillStyle = "white";
+                ctx.fill();
+                ctx.closePath();
+            }
+        }
+
+        function moveBullet() {
+            bulletY -= bulletSpeed;
+            if (bulletY < 0) {
+                bulletFired = false;
+                bulletY = canvas.height;
+            }
+        }
+
+        function collisionDetection() {
+            for (let c = 0; c < enemyColumnCount; c++) {
+                for (let r = 0; r < enemyRowCount; r++) {
+                    let enemy = enemies[c][r];
+                    if (enemy.status === 1) {
+                        if (
+                            bulletX > enemy.x &&
+                            bulletX < enemy.x + enemyWidth &&
+                            bulletY > enemy.y &&
+                            bulletY < enemy.y + enemyHeight
+                        ) {
+                            enemy.status = 0;
+                            bulletFired = false;
+                            bulletY = canvas.height;
+                        }
+                    }
+                }
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPlayer();
+            drawEnemies();
+            drawBullet();
+            collisionDetection();
+            moveBullet();
+            requestAnimationFrame(draw);
+        }
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "ArrowLeft" && playerX > 0) {
+                playerX -= playerSpeed;
+            }
+            if (event.key === "ArrowRight" && playerX < canvas.width - playerWidth) {
+                playerX += playerSpeed;
+            }
+            if (event.key === " " && !bulletFired) {
+                bulletFired = true;
+                bulletX = playerX + playerWidth / 2;
+                bulletY = canvas.height - playerHeight;
+            }
+        });
+
+        draw();
+    </script>
+</body>
+</html>
+
